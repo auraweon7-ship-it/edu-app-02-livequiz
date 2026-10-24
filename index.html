@@ -155,7 +155,7 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 py-5 grid grid-cols-[1fr_auto] md:grid-cols-[1fr_auto_1fr] items-center gap-x-4 gap-y-3">
     <div class="min-w-0">
       <p class="text-[11px] font-bold tracking-tight">대학 수업 참여형 도구 · 실시간 응답</p>
-      <p class="flex items-baseline gap-2"><span class="font-disp text-2xl font-medium tracking-[0.3em] leading-tight select-none">LIVEPOLL</span><span id="verChip" class="chip !px-2 !py-0.5 font-disp !text-[10px]">v1.8.1</span></p>
+      <p class="flex items-baseline gap-2"><span class="font-disp text-2xl font-medium tracking-[0.3em] leading-tight select-none">LIVEPOLL</span><span id="verChip" class="chip !px-2 !py-0.5 font-disp !text-[10px]">v1.8.2</span></p>
       <p class="text-[10px] text-muted">Presented by Live Vote &amp; Quiz</p>
     </div>
     <h1 class="col-span-2 md:col-span-1 order-3 md:order-none flex items-center gap-3 md:justify-center min-w-0">
@@ -336,7 +336,7 @@
             <button class="pill pill-primary pill-lg" data-act="toggle" id="btnToggle" type="button" title="Space">▶ 시작</button>
             <button class="pill pill-primary" data-act="reveal" id="btnReveal" type="button">✔ 정답 공개</button>
             <button class="pill" data-act="reset" type="button" title="이 질문의 투표를 초기화">↺ 초기화</button>
-            <button class="pill pill-primary" data-act="next" type="button" title="다음 질문 (→)">다음 ▶</button>
+            <button class="pill pill-primary" data-act="next" type="button" title="다음 질문으로 넘어가 바로 시작 (→)">다음 ▶</button>
             <button class="pill" data-act="fullscreen" type="button">⛶ 전체화면</button>
             <button class="pill" data-act="to-lobby" type="button" title="QR·입장자 대기실로 돌아가기">🚪 대기실</button>
             <button class="pill" data-act="live-csv" type="button" title="이번 회차의 문항별·학생별 결과를 CSV로 저장">⬇ 결과 CSV</button>
@@ -508,6 +508,7 @@
    LIVEPOLL — 02 실시간 투표/퀴즈 (single-file)
    ========================================================= */
 // 버전: 새 기능 → 둘째 자리, 고침·디자인 → 셋째 자리
+// v1.8.2  학생 “투표 제출” → “제출”, “다음”(→)을 누르면 다음 질문 투표 자동 시작
 // v1.8.1  고침: AI 퀴즈 생성 — 키를 넣은 제공자 자동 선택, 모델 이름이 안 맞으면 사용 가능한 모델로 자동 전환,
 //         오류 원인별 안내(키·한도·네트워크), 90초 응답 제한, 응답 토큰 여유 확대
 // v1.8.0  결과 화면 “결과 CSV” 저장(문항별·학생별), 결과 막대그래프 디자인 개선(보기 배지·눌린 트랙·정답 ✔ 강조·오답 흐리게)
@@ -519,7 +520,7 @@
 // v1.5.1  디자인 통일: QUIZLAB(01) 스타일 — 앞면 돌출 표면, Inter+Noto Sans KR, 영문 섹션 헤더, 세그먼트 탭, 전체 폭 헤더·푸터, 날짜 표시
 // v1.5.0  결과 저장·QUIZ HISTORY·질문 세트·회차 리포트·문항 편집기
 // v1.4.0  소프트 UI 디자인 · v1.3.0 질문 유형·타이머·단축키 · v1.2.0 AI·MQTT 중계 · v1.0.0 기본 골격
-const VERSION = '1.8.1';
+const VERSION = '1.8.2';
 const TIMES = [0, 10, 20, 30, 60, 90, 120];
 const TYPE_LABEL = { single: '단일 선택', multi: '복수 선택', ox: 'OX', word: '워드클라우드' };
 const LETTERS = 'ABCDEF';
@@ -789,6 +790,8 @@ function goQ(d) {
   if (n === S.idx) return toast(d > 0 ? '마지막 질문입니다.' : '첫 질문입니다.');
   if (status() === 'open') closeVote();
   S.idx = n; S.endsAt = 0; saveHost(); broadcastState(); renderLive();
+  // 다음 질문으로 넘어가면 아직 시작 전인 질문은 바로 투표 시작
+  if (d > 0 && phase === 'quiz' && status() === 'idle') startVote();
 }
 
 /* ---------- history ---------- */
@@ -1622,7 +1625,7 @@ function renderStudent() {
     if (q.type === 'ox') main = `<div class="grid grid-cols-2 gap-4">${q.options.map((o, i) => `<button type="button" class="opt-btn ox-btn" data-act="stu-pick" data-i="${i}" aria-pressed="${ST.sel.includes(i)}" style="${o === 'O' ? '' : ''}">${o}</button>`).join('')}</div>`;
     else if (q.type === 'word') main = `<input id="stuWord" class="inset" style="font-size:1.4rem;padding:1rem 1.2rem" maxlength="30" placeholder="짧은 단어로 답하세요" autocomplete="off" enterkeyhint="send">`;
     else main = `${q.type === 'multi' ? '<p class="text-sm text-muted font-bold mb-3">정답을 모두 고르세요</p>' : ''}<div class="grid gap-4">${q.options.map((o, i) => `<button type="button" class="opt-btn" data-act="stu-pick" data-i="${i}" aria-pressed="${ST.sel.includes(i)}"><span class="badge">${LETTERS[i]}</span><span style="overflow-wrap:anywhere">${esc(o)}</span></button>`).join('')}</div>`;
-    main += `<button type="button" class="pill pill-primary w-full mt-6" style="min-height:64px;font-size:1.25rem" data-act="stu-submit" id="stuSubmit">투표 제출</button>`;
+    main += `<button type="button" class="pill pill-primary w-full mt-6" style="min-height:64px;font-size:1.25rem" data-act="stu-submit" id="stuSubmit">제출</button>`;
   }
   body.innerHTML = head + main;
   tickStudent();
