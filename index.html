@@ -106,6 +106,26 @@
   .hero{font-family:Inter,sans-serif;font-weight:600;letter-spacing:.12em;line-height:1.05}
   #livePanel:fullscreen{background:var(--bg);overflow:auto;padding:2.5vw;border-radius:0}
   #livePanel:fullscreen .q-big{font-size:clamp(1.6rem,3vw,3.2rem)}
+  /* 결과 막대: 보기 배지 + 눌린 홈 트랙 + 돌출 채움 */
+  .bars{display:grid;gap:clamp(1rem,1.8vw,1.6rem)}
+  .bar-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:end;gap:clamp(.75rem,1.4vw,1.25rem);transition:opacity .3s}
+  .bar-badge{width:clamp(2.3rem,3.4vw,3.2rem);height:clamp(2.3rem,3.4vw,3.2rem);border-radius:.9rem;display:grid;place-items:center;font-family:Inter;font-weight:700;
+    font-size:clamp(1rem,1.6vw,1.45rem);background:var(--face);border:1px solid rgba(0,0,0,.05);box-shadow:var(--raise-sm);transition:background .3s,color .3s}
+  .bar-label{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;font-weight:700;font-size:clamp(1.05rem,1.9vw,1.85rem);line-height:1.2;margin-bottom:.5rem;overflow-wrap:anywhere}
+  .bar-track{height:clamp(.85rem,1.5vw,1.3rem);border-radius:9999px;background:var(--sunk);box-shadow:var(--press);overflow:hidden}
+  .bar-fill{height:100%;width:0;border-radius:9999px;background:linear-gradient(180deg,#9a9aa1,#77777e);box-shadow:inset 0 1px 0 rgba(255,255,255,.4);
+    transition:width .8s cubic-bezier(.22,1,.36,1),background .3s}
+  .bar-val{text-align:right;font-family:Inter,"Noto Sans KR",sans-serif;min-width:4.6em;line-height:1}
+  .bar-val b{font-size:clamp(1.5rem,2.6vw,2.6rem);font-weight:700;letter-spacing:-.02em}
+  .bar-val small{font-size:clamp(.8rem,1.1vw,1rem);font-weight:600;margin-left:.15em}
+  .bar-val span{display:block;margin-top:.3rem;font-size:clamp(.8rem,1.1vw,1.05rem);font-weight:600;color:var(--muted)}
+  .bar-row.is-lead .bar-fill{background:linear-gradient(180deg,#5c5c63,#3a3a3f)}
+  .bar-row.is-ok .bar-fill{background:linear-gradient(180deg,#56b071,#3f9c5a)}
+  .bar-row.is-ok .bar-badge{background:var(--ok);border-color:var(--ok);color:#fff}
+  .bar-row.is-ok .bar-val b{color:var(--ok)}
+  .bar-ok{display:none;font-size:clamp(.7rem,1vw,.95rem);font-weight:700;color:var(--ok);border:1.5px solid rgba(var(--ok-rgb),.5);border-radius:9999px;padding:.15em .7em;background:rgba(var(--ok-rgb),.08)}
+  .bar-row.is-ok .bar-ok{display:inline-flex}
+  .bar-row.is-dim{opacity:.42}
   .cloud{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;justify-content:center;align-items:center;min-height:260px;padding:1rem}
   .cloud span{font-weight:700;line-height:1.1;transition:font-size .5s;overflow-wrap:anywhere}
   .tbl-wrap{background:var(--face);border:1px solid rgba(0,0,0,.04);box-shadow:var(--raise);border-radius:1.25rem}
@@ -135,7 +155,7 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 py-5 grid grid-cols-[1fr_auto] md:grid-cols-[1fr_auto_1fr] items-center gap-x-4 gap-y-3">
     <div class="min-w-0">
       <p class="text-[11px] font-bold tracking-tight">대학 수업 참여형 도구 · 실시간 응답</p>
-      <p class="flex items-baseline gap-2"><span class="font-disp text-2xl font-medium tracking-[0.3em] leading-tight select-none">LIVEPOLL</span><span id="verChip" class="chip !px-2 !py-0.5 font-disp !text-[10px]">v1.7.1</span></p>
+      <p class="flex items-baseline gap-2"><span class="font-disp text-2xl font-medium tracking-[0.3em] leading-tight select-none">LIVEPOLL</span><span id="verChip" class="chip !px-2 !py-0.5 font-disp !text-[10px]">v1.8.0</span></p>
       <p class="text-[10px] text-muted">Presented by Live Vote &amp; Quiz</p>
     </div>
     <h1 class="col-span-2 md:col-span-1 order-3 md:order-none flex items-center gap-3 md:justify-center min-w-0">
@@ -302,8 +322,12 @@
       <div class="grid gap-8 xl:grid-cols-[minmax(0,1fr)_300px]">
         <div class="min-w-0 flex flex-col gap-5">
           <h2 id="liveQuestion" class="q-big">질문이 없습니다.</h2>
-          <div class="card-sm p-3 sm:p-5 min-w-0">
-            <div id="chartWrap" class="relative w-full overflow-hidden" style="height:360px"><canvas id="chart" aria-label="실시간 투표 결과 막대그래프" role="img"></canvas></div>
+          <div class="card-sm p-5 sm:p-7 min-w-0">
+            <div class="flex items-center justify-between gap-3 mb-5 flex-wrap">
+              <span class="font-disp text-[11px] font-semibold tracking-[.18em] text-muted">RESULTS</span>
+              <span id="barsCap" class="text-xs text-muted font-semibold text-right"></span>
+            </div>
+            <div id="chartWrap" class="bars" aria-live="polite" aria-label="실시간 투표 결과"></div>
             <div id="cloud" class="cloud" hidden></div>
           </div>
           <div id="liveAnswer" class="hidden-i rounded-2xl px-5 py-3 text-xl font-bold correct-box"></div>
@@ -315,6 +339,7 @@
             <button class="pill pill-primary" data-act="next" type="button" title="다음 질문 (→)">다음 ▶</button>
             <button class="pill" data-act="fullscreen" type="button">⛶ 전체화면</button>
             <button class="pill" data-act="to-lobby" type="button" title="QR·입장자 대기실로 돌아가기">🚪 대기실</button>
+            <button class="pill" data-act="live-csv" type="button" title="이번 회차의 문항별·학생별 결과를 CSV로 저장">⬇ 결과 CSV</button>
           </div>
           <p class="text-[11px] text-muted">단축키 · <b class="text-ink">Space</b> 시작/마감 · <b class="text-ink">→</b> 다음 질문 · <b class="text-ink">←</b> 이전 질문 · <b class="text-ink">F</b> 전체화면</p>
         </div>
@@ -483,6 +508,7 @@
    LIVEPOLL — 02 실시간 투표/퀴즈 (single-file)
    ========================================================= */
 // 버전: 새 기능 → 둘째 자리, 고침·디자인 → 셋째 자리
+// v1.8.0  결과 화면 “결과 CSV” 저장(문항별·학생별), 결과 막대그래프 디자인 개선(보기 배지·눌린 트랙·정답 ✔ 강조·오답 흐리게)
 // v1.7.1  고침: 웹 주소에서 중계(MQTT)가 꺼져 있어 휴대폰이 “교수 화면을 찾는 중”에 멈추던 문제 — 웹 주소에서는 중계 항상 켜짐,
 //         학생 화면의 “교수 화면” 버튼 삭제, 헤더 “학생 화면”은 새 탭으로 열기
 // v1.7.0  결과 화면에 대기실(큰 QR·입장자 이름 목록) 추가, “퀴즈 시작”을 눌러야 문제 풀이 시작, 학생 대기 화면
@@ -491,7 +517,7 @@
 // v1.5.1  디자인 통일: QUIZLAB(01) 스타일 — 앞면 돌출 표면, Inter+Noto Sans KR, 영문 섹션 헤더, 세그먼트 탭, 전체 폭 헤더·푸터, 날짜 표시
 // v1.5.0  결과 저장·QUIZ HISTORY·질문 세트·회차 리포트·문항 편집기
 // v1.4.0  소프트 UI 디자인 · v1.3.0 질문 유형·타이머·단축키 · v1.2.0 AI·MQTT 중계 · v1.0.0 기본 골격
-const VERSION = '1.7.1';
+const VERSION = '1.8.0';
 const TIMES = [0, 10, 20, 30, 60, 90, 120];
 const TYPE_LABEL = { single: '단일 선택', multi: '복수 선택', ox: 'OX', word: '워드클라우드' };
 const LETTERS = 'ABCDEF';
@@ -819,64 +845,36 @@ chime.unlock = () => { try { if (!chime.ac) chime.ac = new (window.AudioContext 
 /* =========================================================
    LIVE (결과 화면)
    ========================================================= */
-let chart = null, chartQ = null, liveTimer = null;
-const valuePlugin = {
-  id: 'vals',
-  afterDatasetsDraw(c) {
-    const ds = c.data.datasets[0]; const meta = c.getDatasetMeta(0); const total = c.$total || 0;
-    const fs = c.$fs || 20; const ctx = c.ctx;
-    ctx.save(); ctx.font = `600 ${fs}px Inter, "Noto Sans KR", sans-serif`; ctx.fillStyle = CSSV('--ink'); ctx.textBaseline = 'middle';
-    meta.data.forEach((bar, i) => {
-      const v = ds.data[i] || 0; const p = total ? Math.round(v / total * 100) : 0;
-      ctx.fillText(`${v}표 · ${p}%`, bar.x + 12, bar.y);
-    });
-    ctx.restore();
-  }
-};
-function wrapLabel(s, n) { const out = []; let line = ''; for (const ch of String(s)) { line += ch; if (line.length >= n && ch === ' ') { out.push(line.trim()); line = ''; } else if (line.length >= n + 4) { out.push(line); line = ''; } } if (line.trim()) out.push(line.trim()); return out.slice(0, 3); }
-
+let liveTimer = null;
+// 결과 막대: 같은 질문이면 행을 유지하고 너비만 바꿔 애니메이션
+let barsKey = '';
 function renderChart(q, t, st) {
   const wrap = $('#chartWrap'), cloud = $('#cloud');
-  if (q.type === 'word') { wrap.hidden = true; cloud.hidden = false; renderCloud(q, t, st); return; }
+  if (q.type === 'word') { wrap.hidden = true; cloud.hidden = false; $('#barsCap').textContent = `응답 ${t.total}명 · 많이 나온 단어일수록 크게`; renderCloud(q, t, st); return; }
   wrap.hidden = false; cloud.hidden = true;
-  const W = wrap.clientWidth || 800; const fsBoost = document.fullscreenElement ? 1.25 : 1;
-  const fs = Math.round((W >= 900 ? 32 : W >= 640 ? 26 : W >= 480 ? 20 : 15) * fsBoost);
-  const labels = q.options.map((o, i) => q.type === 'ox' ? o : wrapLabel(`${LETTERS[i]}. ${o}`, W >= 700 ? 16 : W >= 480 ? 10 : 6));
-  const revealed = st === 'revealed';
-  const colors = q.options.map((_, i) => revealed ? (q.correct.includes(i) ? CSSV('--ok') : CSSV('--bar-dim')) : CSSV('--bar'));
-  const rowH = Math.round(fs * 3.1);
-  wrap.style.height = Math.max(220, q.options.length * rowH + 30) + 'px';
-  const max = Math.max(1, ...t.counts);
-  // 숨김(대기실) 상태에서 화면 크기가 바뀌면 Chart.js가 크기를 못 따라오므로 새로 생성
-  if (chart && Math.abs(chart.width - W) > 2) { chart.destroy(); chart = null; }
-  if (!chart) {
-    chart = new Chart($('#chart'), {
-      type: 'bar',
-      data: { labels, datasets: [{ data: t.counts, backgroundColor: colors, borderRadius: 14, borderSkipped: false, barPercentage: .78, categoryPercentage: .92 }] },
-      options: {
-        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-        animation: { duration: 750, easing: 'easeOutCubic' },
-        layout: { padding: { right: fs * 6.2, left: Math.round(fs * .8) } },
-        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-        scales: {
-          x: { beginAtZero: true, suggestedMax: max, ticks: { display: false }, grid: { display: false }, border: { display: false } },
-          y: { ticks: { font: { size: fs, weight: '600', family: 'Inter, "Noto Sans KR", sans-serif' }, color: CSSV('--ink') }, grid: { display: false }, border: { display: false } }
-        }
-      },
-      plugins: [valuePlugin]
-    });
-  } else {
-    if (chartQ !== q.id + ':' + q.options.length) chart.data.datasets[0].data = q.options.map(() => 0);
-    chart.data.labels = labels;
-    chart.data.datasets[0].data = t.counts;
-    chart.data.datasets[0].backgroundColor = colors;
-    chart.options.scales.x.suggestedMax = max;
-    chart.options.scales.y.ticks.font.size = fs;
-    chart.options.layout.padding.right = fs * 6.2;
+  const key = q.id + '|' + q.type + '|' + q.options.join('\u0001');
+  if (key !== barsKey) {
+    barsKey = key;
+    wrap.innerHTML = q.options.map((o, i) => `<div class="bar-row">
+        <span class="bar-badge">${q.type === 'ox' ? esc(o) : LETTERS[i]}</span>
+        <div class="min-w-0"><div class="bar-label">${q.type === 'ox' ? (i === 0 ? '그렇다' : '아니다') : esc(o)}<span class="bar-ok">✔ 정답</span></div>
+          <div class="bar-track"><div class="bar-fill"></div></div></div>
+        <div class="bar-val"><b>0</b><small>표</small><span>0%</span></div>
+      </div>`).join('');
+    void wrap.offsetWidth; // 0%에서 시작하도록 레이아웃 확정
   }
-  chartQ = q.id + ':' + q.options.length;
-  chart.$total = t.total; chart.$fs = fs;
-  chart.update();
+  const revealed = st === 'revealed'; const max = Math.max(0, ...t.counts);
+  wrap.querySelectorAll('.bar-row').forEach((row, i) => {
+    const c = t.counts[i] || 0, p = t.total ? Math.round(c / t.total * 100) : 0;
+    row.querySelector('.bar-fill').style.width = p + '%';
+    row.querySelector('.bar-val b').textContent = c;
+    row.querySelector('.bar-val span').textContent = p + '%';
+    const ok = revealed && q.correct.includes(i);
+    row.classList.toggle('is-ok', ok);
+    row.classList.toggle('is-dim', revealed && !ok);
+    row.classList.toggle('is-lead', !revealed && c > 0 && c === max);
+  });
+  $('#barsCap').textContent = `응답 ${t.total}명` + (q.type === 'multi' ? ' · 복수 선택: 비율은 참여 인원 대비' : '');
 }
 function renderCloud(q, t, st) {
   const el = $('#cloud');
@@ -925,7 +923,7 @@ function renderLive() {
     } else ans.classList.add('hidden-i');
   } else {
     $('#participants').textContent = 0; ans.classList.add('hidden-i');
-    if (chart) { chart.data.labels = []; chart.data.datasets[0].data = []; chart.update(); }
+    $('#chartWrap').innerHTML = ''; barsKey = ''; $('#barsCap').textContent = '';
     $('#cloud').hidden = true; $('#chartWrap').hidden = false;
   }
   tickCountdown();
@@ -1272,6 +1270,23 @@ function downloadStudentCSV() {
   studs.forEach(t => lines.push([s, t.name, t.answered, t.correct, t.rated, t.rate == null ? '' : Math.round(t.rate * 100),
     ...rows.map((r, i) => { const x = t.answers[i]; return x ? fmtBallot(r, x.a) + (x.ok == null ? '' : x.ok ? ' (O)' : ' (X)') : '-'; })].map(q).join(',')));
   download(`livepoll-students-${s.replace(/[\\/:*?"<>|\s]+/g, '_')}.csv`, '\ufeff' + lines.join('\r\n'), 'text/csv;charset=utf-8');
+}
+// 결과 화면 CSV: 현재 회차의 문항별 결과 + 학생별 결과
+function downloadLiveCSV() {
+  const s = S.session; const rows = reportRows(s);
+  if (status() === 'open') toast('진행 중인 질문은 마감하거나 정답을 공개한 뒤 CSV에 포함됩니다.', 3500);
+  if (!rows.length) return toast('저장된 결과가 없습니다. 투표를 마감하거나 정답을 공개하면 저장됩니다.', 3500);
+  const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`, line = a => a.map(q).join(',');
+  const studs = studentStats(rows);
+  const L = [line(['LIVEPOLL 퀴즈 결과', s, `저장 ${fmtTime(Date.now())}`]), '',
+    line(['[문항별 결과]']), line(['번호', '질문', '유형', '참여 인원', '정답', '정답 수', '정답률(%)', '보기별 득표'])];
+  rows.forEach((r, i) => L.push(line(['Q' + (i + 1), r.text, TYPE_LABEL[r.type], r.total, answerOf(r), r.correctCount ?? '', r.rate == null ? '' : Math.round(r.rate * 100), voteSummary(r)])));
+  L.push('', line(['[학생별 결과]']), line(['이름', '응답 문항 수', '정답 수', '정답률(%)', ...rows.map((r, i) => `Q${i + 1}`)]));
+  studs.forEach(t => L.push(line([t.name, t.answered, t.correct, t.rate == null ? '' : Math.round(t.rate * 100),
+    ...rows.map((r, i) => { const x = t.answers[i]; return x ? fmtBallot(r, x.a) + (x.ok == null ? '' : x.ok ? ' (O)' : ' (X)') : '-'; })])));
+  if (!studs.length) L.push(line(['(학생 응답 없음)']));
+  download(`livepoll-결과-${s.replace(/[\\/:*?"<>|\s]+/g, '_')}.csv`, '\ufeff' + L.join('\r\n'), 'text/csv;charset=utf-8');
+  toast(`“${s}” 결과 ${rows.length}문항을 CSV로 저장했습니다.`);
 }
 function voteSummary(h) {
   if (h.type === 'word') return Object.entries(h.words || {}).sort((a, b) => b[1] - a[1]).map(([w, c]) => `${w}:${c}`).join(' / ');
@@ -1670,6 +1685,7 @@ document.addEventListener('click', e => {
     case 'fullscreen': toggleFs(); break;
     case 'quiz-start': startQuiz(); break;
     case 'to-lobby': toLobby(); break;
+    case 'live-csv': downloadLiveCSV(); break;
     case 'relay': if (HOSTED) { toast('웹 주소에서는 중계가 항상 켜져 있습니다.'); break; } S.relay = !S.relay; saveHost(); syncRelay(); renderRoomPanel(); toast(S.relay ? '공개 MQTT 중계를 켰습니다. QR코드가 갱신되었습니다.' : '중계를 껐습니다. 같은 브라우저의 탭끼리만 전달됩니다.'); break;
     case 'copy-url': navigator.clipboard?.writeText(studentUrl()).then(() => toast('학생 접속 링크를 복사했습니다.'), () => toast(studentUrl(), 5000)); break;
     case 'open-student-tab': window.open(studentUrl(), '_blank'); break;
