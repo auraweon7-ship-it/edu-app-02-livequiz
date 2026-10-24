@@ -115,6 +115,8 @@
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;max-width:min(92vw,560px)}
   .qr-box{background:#fff;border-radius:1.1rem;padding:12px;display:inline-block;border:1px solid rgba(0,0,0,.06);box-shadow:var(--press)}
   .qr-box img,.qr-box canvas{display:block;width:100%!important;height:auto!important;max-width:220px}
+  .qr-box.qr-lg img,.qr-box.qr-lg canvas{max-width:300px}
+  #livePanel:fullscreen .qr-box.qr-lg img,#livePanel:fullscreen .qr-box.qr-lg canvas{max-width:min(420px,48vh)}
   /* 슬라이더 바: 눌린 홈 + 파란 채움 + 돌출 손잡이 */
   input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:.5rem;border-radius:9999px;cursor:pointer;margin:.4rem 0;
     background:linear-gradient(to right,var(--accent) 0 var(--fill,0%),var(--sunk) var(--fill,0%) 100%);box-shadow:var(--press)}
@@ -133,7 +135,7 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 py-5 grid grid-cols-[1fr_auto] md:grid-cols-[1fr_auto_1fr] items-center gap-x-4 gap-y-3">
     <div class="min-w-0">
       <p class="text-[11px] font-bold tracking-tight">대학 수업 참여형 도구 · 실시간 응답</p>
-      <p class="flex items-baseline gap-2"><span class="font-disp text-2xl font-medium tracking-[0.3em] leading-tight select-none">LIVEPOLL</span><span id="verChip" class="chip !px-2 !py-0.5 font-disp !text-[10px]">v1.6.0</span></p>
+      <p class="flex items-baseline gap-2"><span class="font-disp text-2xl font-medium tracking-[0.3em] leading-tight select-none">LIVEPOLL</span><span id="verChip" class="chip !px-2 !py-0.5 font-disp !text-[10px]">v1.7.0</span></p>
       <p class="text-[10px] text-muted">Presented by Live Vote &amp; Quiz</p>
     </div>
     <h1 class="col-span-2 md:col-span-1 order-3 md:order-none flex items-center gap-3 md:justify-center min-w-0">
@@ -236,6 +238,51 @@
   <!-- ---------- LIVE ---------- -->
   <section id="tab-live" role="tabpanel" hidden>
     <div id="livePanel" class="card !rounded-[2.5rem] px-4 sm:px-8 py-6 sm:py-8">
+      <!-- 대기실: QR + 입장자 목록 -->
+      <div id="lobbyView">
+        <div class="sec-head">🚪 LOBBY <small>—— 입장 대기실 · QR을 찍고 이름을 입력하세요</small><span class="total font-disp">JOINED <b class="js-joined">0</b></span></div>
+        <div class="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] items-start">
+          <div class="card-sm p-5 sm:p-6 text-center min-w-0">
+            <p class="font-disp text-[11px] font-semibold tracking-[.18em] text-muted mb-2">SCAN TO JOIN</p>
+            <div class="qr-box qr-lg mx-auto"><div class="js-qr" data-size="300"></div></div>
+            <p class="font-disp text-[11px] font-semibold tracking-[.18em] text-muted mt-4">ROOM CODE</p>
+            <p class="js-room-code cd text-5xl sm:text-6xl tracking-[.14em] leading-tight">-----</p>
+            <p class="js-join-url text-[10px] text-muted mt-2 break-all"></p>
+            <div class="flex justify-center gap-2 mt-3 flex-wrap">
+              <button class="pill pill-sm" data-act="copy-url" type="button">링크 복사</button>
+              <button class="pill pill-sm" data-act="open-student-tab" type="button">새 탭에서 학생 화면</button>
+              <button class="pill pill-sm" data-act="new-room" type="button">새 방 코드</button>
+            </div>
+            <div class="js-file-warn rounded-2xl p-3 text-xs leading-5 wrong-box text-left mt-4" hidden></div>
+            <div class="flex items-center justify-between gap-3 mt-4 text-left">
+              <div><p class="text-xs font-bold">📡 실시간 중계 (MQTT)</p><p class="js-relay-status text-[11px] text-muted">꺼짐</p></div>
+              <button class="switch js-relay-switch" role="switch" aria-checked="false" data-act="relay" aria-label="공개 MQTT 중계 켜기/끄기" type="button"></button>
+            </div>
+            <p class="js-relay-help text-[11px] text-muted mt-2 leading-5 text-left"></p>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-end gap-3 mb-5">
+              <span class="js-joined cd text-6xl sm:text-7xl leading-none">0</span><span class="text-lg font-semibold pb-1">명 입장</span>
+            </div>
+            <ul id="lobbyList" class="flex flex-wrap gap-2.5 min-h-[120px] content-start"></ul>
+            <div class="mt-8 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] items-end">
+              <label class="text-xs font-bold">🎓 수업 회차
+                <input class="js-session inset mt-1.5" maxlength="40" placeholder="예: 3주차" aria-label="수업 회차">
+              </label>
+              <button class="pill pill-sm" data-act="roster-clear" type="button">입장 목록 비우기</button>
+            </div>
+            <p id="lobbyInfo" class="text-sm text-muted mt-5"></p>
+            <div class="flex flex-wrap gap-3 mt-4">
+              <button class="pill pill-primary pill-lg" data-act="quiz-start" id="btnQuizStart" type="button">▶ 퀴즈 시작</button>
+              <button class="pill" data-act="fullscreen" type="button">⛶ 전체화면</button>
+            </div>
+            <p class="text-[11px] text-muted mt-3">단축키 · <b class="text-ink">Space</b> 퀴즈 시작 · <b class="text-ink">F</b> 전체화면</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 문제 풀이 -->
+      <div id="quizView" hidden>
       <div class="sec-head">📊 LIVE BOARD <small>—— 대형 스크린 결과 화면</small>
         <span class="total flex items-center gap-2 flex-wrap justify-end">
           <span class="chip" id="liveStatus">대기</span><span class="chip font-disp" id="liveMeta">Q 0/0</span><span class="chip" id="liveType">-</span>
@@ -257,7 +304,7 @@
         <div class="min-w-0 flex flex-col gap-5">
           <h2 id="liveQuestion" class="q-big">질문이 없습니다.</h2>
           <div class="card-sm p-3 sm:p-5 min-w-0">
-            <div id="chartWrap" class="relative w-full" style="height:360px"><canvas id="chart" aria-label="실시간 투표 결과 막대그래프" role="img"></canvas></div>
+            <div id="chartWrap" class="relative w-full overflow-hidden" style="height:360px"><canvas id="chart" aria-label="실시간 투표 결과 막대그래프" role="img"></canvas></div>
             <div id="cloud" class="cloud" hidden></div>
           </div>
           <div id="liveAnswer" class="hidden-i rounded-2xl px-5 py-3 text-xl font-bold correct-box"></div>
@@ -267,7 +314,8 @@
             <button class="pill pill-primary" data-act="reveal" id="btnReveal" type="button">✔ 정답 공개</button>
             <button class="pill" data-act="reset" type="button" title="이 질문의 투표를 초기화">↺ 초기화</button>
             <button class="pill pill-primary" data-act="next" type="button" title="다음 질문 (→)">다음 ▶</button>
-            <button class="pill" data-act="fullscreen" id="btnFs" type="button">⛶ 전체화면</button>
+            <button class="pill" data-act="fullscreen" type="button">⛶ 전체화면</button>
+            <button class="pill" data-act="to-lobby" type="button" title="QR·입장자 대기실로 돌아가기">🚪 대기실</button>
           </div>
           <p class="text-[11px] text-muted">단축키 · <b class="text-ink">Space</b> 시작/마감 · <b class="text-ink">→</b> 다음 질문 · <b class="text-ink">←</b> 이전 질문 · <b class="text-ink">F</b> 전체화면</p>
         </div>
@@ -275,27 +323,27 @@
         <aside class="flex flex-col gap-5 min-w-0">
           <div class="card-sm p-5 text-center">
             <p class="font-disp text-[11px] font-semibold tracking-[.18em] text-muted mb-2">SCAN TO JOIN</p>
-            <div class="qr-box mx-auto"><div id="qr"></div></div>
+            <div class="qr-box mx-auto"><div class="js-qr" data-size="220"></div></div>
             <p class="font-disp text-[11px] font-semibold tracking-[.18em] text-muted mt-4">ROOM CODE</p>
-            <p id="roomCode" class="cd text-5xl tracking-[.14em] leading-tight">-----</p>
-            <p id="joinUrl" class="text-[10px] text-muted mt-2 break-all"></p>
+            <p class="js-room-code cd text-5xl tracking-[.14em] leading-tight">-----</p>
+            <p class="js-join-url text-[10px] text-muted mt-2 break-all"></p>
             <div class="flex justify-center gap-2 mt-3 flex-wrap">
               <button class="pill pill-sm" data-act="copy-url" type="button">링크 복사</button>
               <button class="pill pill-sm" data-act="open-student-tab" type="button">새 탭에서 학생 화면</button>
               <button class="pill pill-sm" data-act="new-room" type="button">새 방 코드</button>
             </div>
           </div>
-          <div id="fileWarn" class="rounded-2xl p-3 text-xs leading-5 wrong-box" hidden></div>
+          <div class="js-file-warn rounded-2xl p-3 text-xs leading-5 wrong-box" hidden></div>
           <div>
             <div class="sec-head !mb-3">📡 RELAY <small>—— 공개 MQTT 중계</small></div>
             <div class="flex items-center justify-between gap-3">
-              <p class="text-xs font-bold" id="relayStatus">꺼짐</p>
-              <button class="switch" role="switch" aria-checked="false" id="relaySwitch" data-act="relay" aria-label="공개 MQTT 중계 켜기/끄기" type="button"></button>
+              <p class="js-relay-status text-xs font-bold">꺼짐</p>
+              <button class="switch js-relay-switch" role="switch" aria-checked="false" data-act="relay" aria-label="공개 MQTT 중계 켜기/끄기" type="button"></button>
             </div>
-            <p class="text-[11px] text-muted mt-2 leading-5" id="relayHelp"></p>
+            <p class="js-relay-help text-[11px] text-muted mt-2 leading-5"></p>
           </div>
           <div>
-            <div class="sec-head !mb-3">👥 STUDENTS <small>—— 접속 학생</small><span class="total font-disp">JOINED <b id="rosterCount">0</b></span></div>
+            <div class="sec-head !mb-3">👥 STUDENTS <small>—— 접속 학생</small><span class="total font-disp">JOINED <b class="js-joined">0</b></span></div>
             <div class="flex items-center justify-between gap-3">
               <p class="text-xs font-bold">이름 목록 보기</p>
               <button class="switch" role="switch" aria-checked="false" id="rosterSwitch" data-act="roster-toggle" aria-label="접속 학생 이름 목록 보기" type="button"></button>
@@ -308,10 +356,11 @@
           </div>
           <div>
             <div class="sec-head !mb-3">🎓 SESSION <small>—— 수업 회차</small></div>
-            <input id="sessionInput" class="inset" maxlength="40" placeholder="예: 3주차" aria-label="수업 회차">
+            <input class="js-session inset" maxlength="40" placeholder="예: 3주차" aria-label="수업 회차">
             <p class="text-[11px] text-muted mt-2">마감·정답 공개 시 이 회차 이름으로 결과가 자동 저장됩니다.</p>
           </div>
         </aside>
+      </div>
       </div>
     </div>
   </section>
@@ -435,12 +484,13 @@
    LIVEPOLL — 02 실시간 투표/퀴즈 (single-file)
    ========================================================= */
 // 버전: 새 기능 → 둘째 자리, 고침·디자인 → 셋째 자리
+// v1.7.0  결과 화면에 대기실(큰 QR·입장자 이름 목록) 추가, “퀴즈 시작”을 눌러야 문제 풀이 시작, 학생 대기 화면
 // v1.6.0  학생 이름 입력(QR 접속 시), 접속 학생 목록, 기록에 이름 저장, 학생별 결과 표·CSV·HTML 리포트, 결과 화면 질문 글씨 축소
 // v1.5.2  고침: 삭제·초기화 등 확인창을 페이지 안 모달로 교체 (기본 confirm()이 막힌 환경에서 삭제가 안 되던 문제)
 // v1.5.1  디자인 통일: QUIZLAB(01) 스타일 — 앞면 돌출 표면, Inter+Noto Sans KR, 영문 섹션 헤더, 세그먼트 탭, 전체 폭 헤더·푸터, 날짜 표시
 // v1.5.0  결과 저장·QUIZ HISTORY·질문 세트·회차 리포트·문항 편집기
 // v1.4.0  소프트 UI 디자인 · v1.3.0 질문 유형·타이머·단축키 · v1.2.0 AI·MQTT 중계 · v1.0.0 기본 골격
-const VERSION = '1.6.0';
+const VERSION = '1.7.0';
 const TIMES = [0, 10, 20, 30, 60, 90, 120];
 const TYPE_LABEL = { single: '단일 선택', multi: '복수 선택', ox: 'OX', word: '워드클라우드' };
 const LETTERS = 'ABCDEF';
@@ -620,7 +670,7 @@ function stateMsg() {
   const q = curQ(); const st = status();
   return {
     t: 'state', room: S.room, ts: Date.now(), idx: S.idx, n: S.questions.length,
-    q: q ? { id: q.id, type: q.type, text: q.text, options: q.options } : null,
+    phase, q: q && phase === 'quiz' ? { id: q.id, type: q.type, text: q.text, options: q.options } : null,
     status: st, round: q ? vbox(q).round : 0,
     remain: st === 'open' && S.endsAt ? Math.max(0, S.endsAt - Date.now()) : 0,
     correct: st === 'revealed' && q ? q.correct : null,
@@ -645,7 +695,7 @@ function noteName(m) {
 function acceptVote(m) {
   const q = curQ(); if (!q) return;
   const v = vbox(q);
-  if (v.status !== 'open' || m.qid !== q.id || m.round !== v.round || typeof m.voter !== 'string' || m.voter.length > 40) return;
+  if (phase !== 'quiz' || v.status !== 'open' || m.qid !== q.id || m.round !== v.round || typeof m.voter !== 'string' || m.voter.length > 40) return;
   if (v.ballots[m.voter] !== undefined) { Bus.send({ t: 'ack', room: S.room, voter: m.voter, qid: q.id, round: v.round, dup: true }); return; }
   let a = m.answer;
   if (q.type === 'word') { a = String(a ?? '').trim().slice(0, 30); if (!a) return; }
@@ -676,6 +726,15 @@ function closeVote(auto) {
   v.status = 'closed'; S.endsAt = 0;
   recordHistory(); saveHost(); broadcastState(); renderLive();
   if (auto) toast('⏰ 시간이 끝나 자동 마감되었습니다. 결과가 저장되었습니다.'); else toast('마감되었습니다. 결과가 기록에 저장되었습니다.');
+}
+function startQuiz() {
+  if (!S.questions.length) return toast('먼저 질문을 등록하세요.');
+  phase = 'quiz'; broadcastState(); renderLive();
+  if (status() !== 'open') startVote();
+}
+function toLobby() {
+  if (status() === 'open') closeVote();
+  phase = 'lobby'; S.endsAt = 0; saveHost(); broadcastState(); renderLive();
 }
 function toggleVote() { status() === 'open' ? closeVote() : startVote(); }
 function revealAnswer() {
@@ -729,7 +788,7 @@ function reopenHistory(id) {
     S.questions.splice(S.idx + 1, 0, q); i = S.idx + 1;
   }
   if (status() === 'open') closeVote();
-  S.idx = i; S.session = e.session; S.endsAt = 0;
+  S.idx = i; S.session = e.session; S.endsAt = 0; phase = 'quiz';
   S.votes[e.qid] = { round: e.round, ballots: { ...(e.ballots || {}) }, status: 'closed' };
   saveHost(); broadcastState();
   location.hash = '#/live';
@@ -770,7 +829,7 @@ const valuePlugin = {
     ctx.restore();
   }
 };
-function wrapLabel(s, n) { const out = []; let line = ''; for (const ch of String(s)) { line += ch; if (line.length >= n && ch === ' ') { out.push(line.trim()); line = ''; } else if (line.length >= n + 8) { out.push(line); line = ''; } } if (line.trim()) out.push(line.trim()); return out.slice(0, 3); }
+function wrapLabel(s, n) { const out = []; let line = ''; for (const ch of String(s)) { line += ch; if (line.length >= n && ch === ' ') { out.push(line.trim()); line = ''; } else if (line.length >= n + 4) { out.push(line); line = ''; } } if (line.trim()) out.push(line.trim()); return out.slice(0, 3); }
 
 function renderChart(q, t, st) {
   const wrap = $('#chartWrap'), cloud = $('#cloud');
@@ -778,12 +837,14 @@ function renderChart(q, t, st) {
   wrap.hidden = false; cloud.hidden = true;
   const W = wrap.clientWidth || 800; const fsBoost = document.fullscreenElement ? 1.25 : 1;
   const fs = Math.round((W >= 900 ? 32 : W >= 640 ? 26 : W >= 480 ? 20 : 15) * fsBoost);
-  const labels = q.options.map((o, i) => q.type === 'ox' ? o : wrapLabel(`${LETTERS[i]}. ${o}`, W >= 700 ? 16 : 10));
+  const labels = q.options.map((o, i) => q.type === 'ox' ? o : wrapLabel(`${LETTERS[i]}. ${o}`, W >= 700 ? 16 : W >= 480 ? 10 : 6));
   const revealed = st === 'revealed';
   const colors = q.options.map((_, i) => revealed ? (q.correct.includes(i) ? CSSV('--ok') : CSSV('--bar-dim')) : CSSV('--bar'));
   const rowH = Math.round(fs * 3.1);
   wrap.style.height = Math.max(220, q.options.length * rowH + 30) + 'px';
   const max = Math.max(1, ...t.counts);
+  // 숨김(대기실) 상태에서 화면 크기가 바뀌면 Chart.js가 크기를 못 따라오므로 새로 생성
+  if (chart && Math.abs(chart.width - W) > 2) { chart.destroy(); chart = null; }
   if (!chart) {
     chart = new Chart($('#chart'), {
       type: 'bar',
@@ -791,7 +852,7 @@ function renderChart(q, t, st) {
       options: {
         indexAxis: 'y', responsive: true, maintainAspectRatio: false,
         animation: { duration: 750, easing: 'easeOutCubic' },
-        layout: { padding: { right: fs * 6.2, left: 4 } },
+        layout: { padding: { right: fs * 6.2, left: Math.round(fs * .8) } },
         plugins: { legend: { display: false }, tooltip: { enabled: false } },
         scales: {
           x: { beginAtZero: true, suggestedMax: max, ticks: { display: false }, grid: { display: false }, border: { display: false } },
@@ -832,6 +893,13 @@ let liveRaf = null;
 function scheduleLive() { if (liveRaf) return; liveRaf = requestAnimationFrame(() => { liveRaf = null; renderLive(); }); }
 function renderLive() {
   if (!hostActive) return;
+  $('#lobbyView').hidden = phase !== 'lobby'; $('#quizView').hidden = phase === 'lobby';
+  if (phase === 'lobby') {
+    renderRoomPanel();
+    $('#lobbyInfo').textContent = S.questions.length ? `준비된 질문 ${S.questions.length}개 · Q${S.idx + 1}부터 시작합니다.` : '등록된 질문이 없습니다. “질문 만들기” 탭에서 먼저 등록하세요.';
+    $('#btnQuizStart').disabled = !S.questions.length;
+    return;
+  }
   const q = curQ(); const st = status();
   $('#liveStatus').textContent = STATUS_LABEL[st];
   $('#liveStatus').className = 'chip ' + (st === 'open' ? 'chip-accent' : st === 'revealed' ? 'chip-ok' : '');
@@ -870,10 +938,14 @@ function tickCountdown() {
   if (r <= 5) el.classList.add('warn');
   if (Date.now() >= S.endsAt) { chime(); closeVote(true); }
 }
-let lastUrl = '', showRoster = false;
+let lastUrl = '', showRoster = false, phase = 'lobby'; // phase: lobby(대기실) → quiz(문제 풀이)
 function renderRoster() {
   const R = S.roster || {}; const ids = Object.keys(R);
-  $('#rosterCount').textContent = ids.length;
+  $$('.js-joined').forEach(e => e.textContent = ids.length);
+  const sorted = [...ids].sort((a, b) => R[a].localeCompare(R[b], 'ko'));
+  $('#lobbyList').innerHTML = sorted.length
+    ? sorted.map(id => `<li class="chip !text-base !px-4 !py-1.5 !text-[color:var(--ink)]">${esc(R[id])}</li>`).join('')
+    : '<li class="text-sm text-muted">아직 입장한 학생이 없습니다. 휴대폰으로 QR을 찍으면 이름이 여기에 나타납니다.</li>';
   $('#rosterSwitch').setAttribute('aria-checked', String(showRoster));
   $('#rosterBox').hidden = !showRoster;
   if (!showRoster) return;
@@ -887,28 +959,31 @@ function studentUrl() {
   return `${base}#/vote?room=${S.room}&relay=${S.relay ? 1 : 0}`;
 }
 function renderRoomPanel() {
-  $('#roomCode').textContent = S.room;
+  $$('.js-room-code').forEach(e => e.textContent = S.room);
   renderRoster();
   const url = studentUrl();
-  $('#joinUrl').textContent = url;
+  $$('.js-join-url').forEach(e => e.textContent = url);
   if (url !== lastUrl && window.QRCode) {
-    lastUrl = url; const el = $('#qr'); el.innerHTML = '';
-    try { new QRCode(el, { text: url, width: 220, height: 220, colorDark: '#1f2733', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M }); } catch { el.textContent = 'QR 생성 실패'; }
+    lastUrl = url;
+    $$('.js-qr').forEach(el => {
+      const n = +el.dataset.size || 220; el.innerHTML = '';
+      try { new QRCode(el, { text: url, width: n, height: n, colorDark: '#1f2733', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M }); } catch { el.textContent = 'QR 생성 실패'; }
+    });
   }
-  const w = $('#fileWarn'); const h = location.hostname;
+  const h = location.hostname; let warn = '';
   if (location.protocol === 'file:') {
-    w.hidden = false;
-    w.innerHTML = '<b>⚠ 파일을 직접 연 상태(file://)입니다.</b><br>휴대폰은 이 QR 주소로 접속할 수 없습니다. 이 HTML을 GitHub Pages·Netlify 같은 웹 주소에 올린 뒤 그 주소로 열어 주세요. (같은 브라우저의 탭끼리는 지금도 테스트할 수 있습니다.)';
+    warn = '<b>⚠ 파일을 직접 연 상태(file://)입니다.</b><br>휴대폰은 이 QR 주소로 접속할 수 없습니다. 이 HTML을 GitHub Pages·Netlify 같은 웹 주소에 올린 뒤 그 주소로 열어 주세요. (같은 브라우저의 탭끼리는 지금도 테스트할 수 있습니다.)';
   } else if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(h)) {
-    w.hidden = false;
-    w.innerHTML = '<b>⚠ localhost 주소입니다.</b><br>휴대폰에서는 접속되지 않습니다. 같은 Wi‑Fi에서 PC의 IP 주소(예: http://192.168.0.10:8000)로 열거나 웹에 올려 주세요.';
-  } else w.hidden = true;
-  const sw = $('#relaySwitch'); sw.setAttribute('aria-checked', String(!!S.relay));
-  $('#relayStatus').textContent = RELAY_TEXT[S.relay ? Bus.state : 'off'] || '꺼짐';
-  $('#relayHelp').innerHTML = S.relay
+    warn = '<b>⚠ localhost 주소입니다.</b><br>휴대폰에서는 접속되지 않습니다. 같은 Wi‑Fi에서 PC의 IP 주소(예: http://192.168.0.10:8000)로 열거나 웹에 올려 주세요.';
+  }
+  $$('.js-file-warn').forEach(w => { w.hidden = !warn; w.innerHTML = warn; });
+  $$('.js-relay-switch').forEach(sw => sw.setAttribute('aria-checked', String(!!S.relay)));
+  $$('.js-relay-status').forEach(e => e.textContent = RELAY_TEXT[S.relay ? Bus.state : 'off'] || '꺼짐');
+  const help = S.relay
     ? '공개 MQTT 중계(wss)로 학생 휴대폰의 투표가 이 화면에 전달됩니다. 방 코드가 채널 역할을 하니 개인정보는 넣지 마세요.'
     : '<b>꺼져 있으면 같은 브라우저의 탭끼리만 전달됩니다.</b> 학생 휴대폰 투표를 받으려면 켜세요.';
-  const si = $('#sessionInput'); if (document.activeElement !== si) si.value = S.session;
+  $$('.js-relay-help').forEach(e => e.innerHTML = help);
+  $$('.js-session').forEach(si => { if (document.activeElement !== si) si.value = S.session; });
 }
 
 /* =========================================================
@@ -1415,6 +1490,14 @@ function renderStudent() {
     if (ST.sig !== 'name') { ST.sig = 'name'; body.innerHTML = nameForm(); setTimeout(() => $('#stuName')?.focus(), 60); }
     return;
   }
+  if (m && m.phase === 'lobby') {
+    if (ST.sig !== 'lobby:' + ST.name) {
+      ST.sig = 'lobby:' + ST.name;
+      body.innerHTML = `<div class="text-center py-8"><p class="text-5xl mb-4">👋</p><p class="text-2xl font-bold mb-2" style="overflow-wrap:anywhere">${esc(ST.name)}님, 입장 완료!</p>
+        <p class="text-muted leading-7">교수님이 퀴즈를 시작하면 문제가 바로 나타납니다.<br>이 화면을 켜 둔 채 기다려 주세요.</p></div>`;
+    }
+    return;
+  }
   if (!m) { body.innerHTML = `<div class="text-center py-10"><p class="text-5xl mb-4">📡</p><p class="text-xl font-bold mb-2">교수 화면을 찾는 중…</p><p class="text-muted">방 코드가 맞는지 확인하세요.${ST.relay ? '' : '<br>다른 기기라면 “실시간 중계”를 켜고 다시 입장하세요.'}</p></div>`; ST.sig = 'none'; return; }
   if (!m.q) { body.innerHTML = `<p class="text-center text-xl font-bold py-10">아직 질문이 없습니다.</p>`; ST.sig = 'noq'; return; }
   const key = votedKey(m); const voted = getVoted()[key];
@@ -1580,10 +1663,12 @@ document.addEventListener('click', e => {
     case 'next': goQ(1); break;
     case 'prev': goQ(-1); break;
     case 'fullscreen': toggleFs(); break;
+    case 'quiz-start': startQuiz(); break;
+    case 'to-lobby': toLobby(); break;
     case 'relay': S.relay = !S.relay; saveHost(); syncRelay(); renderRoomPanel(); toast(S.relay ? '공개 MQTT 중계를 켰습니다. QR코드가 갱신되었습니다.' : '중계를 껐습니다. 같은 브라우저의 탭끼리만 전달됩니다.'); break;
     case 'copy-url': navigator.clipboard?.writeText(studentUrl()).then(() => toast('학생 접속 링크를 복사했습니다.'), () => toast(studentUrl(), 5000)); break;
     case 'open-student-tab': window.open(studentUrl(), '_blank'); break;
-    case 'new-room': ask('새 방 코드를 만들까요? 학생들은 새 QR로 다시 접속해야 합니다.', '새로 만들기').then(ok => { if (!ok) return; Bus.unsub(Bus.topic(S.room, 'client')); S.room = genRoom(); S.roster = {}; Bus.join(S.room); Bus.sub(Bus.topic(S.room, 'client')); saveHost(); broadcastState(); renderRoomPanel(); }); break;
+    case 'new-room': ask('새 방 코드를 만들까요? 학생들은 새 QR로 다시 접속해야 합니다.', '새로 만들기').then(ok => { if (!ok) return; Bus.unsub(Bus.topic(S.room, 'client')); S.room = genRoom(); S.roster = {}; phase = 'lobby'; Bus.join(S.room); Bus.sub(Bus.topic(S.room, 'client')); saveHost(); broadcastState(); renderRoomPanel(); }); break;
     // history
     case 'h-reopen': reopenHistory(id); break;
     case 'h-del': ask('이 기록을 삭제할까요?', '삭제', true).then(ok => { if (ok) { LS.set('lp_history', getHist().filter(h => h.id !== id)); renderHistory(); } }); break;
@@ -1620,7 +1705,7 @@ document.addEventListener('input', e => {
   else if (t.dataset.f === 'time') { F.time = TIMES[+t.value]; t.style.setProperty('--fill', (+t.value / (TIMES.length - 1) * 100) + '%'); $('#fTimeLbl').textContent = F.time ? F.time + '초' : '없음'; }
   else if (t.dataset.key) { KEYS[t.dataset.key] = t.value.trim(); delete AI_MSG[t.dataset.key]; saveAI(); $('#aiProvHint') && renderAIHint(); }
   else if (t.dataset.model) { AI.models[t.dataset.model] = t.value.trim(); saveAI(); renderAIHint(); }
-  else if (t.id === 'sessionInput') { S.session = t.value.trim() || today(); saveHost(); }
+  else if (t.classList.contains('js-session')) { S.session = t.value.trim() || today(); saveHost(); }
   else if (t.id === 'stuWord') updateSubmit();
   else if (t.id === 'stuCode') t.value = t.value.toUpperCase();
 });
@@ -1639,6 +1724,11 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.id === 'aiTopic') { e.preventDefault(); aiGenerate(); return; }
   if (!$('#askModal').hidden || $('#tab-live').hidden || $('#host').hidden) return;
   const tg = e.target; if (tg.matches('input,textarea,select,[contenteditable]') || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (phase === 'lobby') {
+    if (e.code === 'Space') { e.preventDefault(); if (tg.matches('button')) tg.blur(); startQuiz(); }
+    else if (e.key === 'f' || e.key === 'F') toggleFs();
+    return;
+  }
   if (e.code === 'Space') { e.preventDefault(); if (tg.matches('button')) tg.blur(); toggleVote(); }
   else if (e.key === 'ArrowRight') { e.preventDefault(); goQ(1); }
   else if (e.key === 'ArrowLeft') { e.preventDefault(); goQ(-1); }
@@ -1649,7 +1739,7 @@ function toggleFs() {
   if (document.fullscreenElement) document.exitFullscreen?.();
   else (p.requestFullscreen ? p.requestFullscreen() : Promise.reject()).catch(() => toast('이 브라우저는 전체화면을 지원하지 않습니다.'));
 }
-document.addEventListener('fullscreenchange', () => { $('#btnFs').textContent = document.fullscreenElement ? '⤢ 전체화면 종료' : '⛶ 전체화면'; setTimeout(renderLive, 120); });
+document.addEventListener('fullscreenchange', () => { $$('[data-act="fullscreen"]').forEach(b => b.textContent = document.fullscreenElement ? '⤢ 전체화면 종료' : '⛶ 전체화면'); setTimeout(renderLive, 120); });
 window.addEventListener('resize', () => { clearTimeout(window.__rz); window.__rz = setTimeout(() => { if (hostActive && !$('#tab-live').hidden) renderLive(); }, 150); });
 window.addEventListener('storage', e => {
   // 다른 탭에서 교수 데이터가 바뀌면 동기화 (교수 탭 여러 개)
