@@ -102,10 +102,10 @@
   @keyframes blink{to{opacity:.25}}
   .correct-box{background:rgba(var(--ok-rgb),.1);border:1.5px solid rgba(var(--ok-rgb),.45);color:#2a6b3d}
   .wrong-box{background:rgba(var(--bad-rgb),.09);border:1.5px solid rgba(var(--bad-rgb),.45);color:#9a3027}
-  .q-big{font-size:clamp(1.5rem,3.2vw,3.2rem);line-height:1.25;font-weight:700;letter-spacing:-.01em;word-break:keep-all;overflow-wrap:anywhere}
+  .q-big{font-size:clamp(1.25rem,2.3vw,2.3rem);line-height:1.25;font-weight:700;letter-spacing:-.01em;word-break:keep-all;overflow-wrap:anywhere}
   .hero{font-family:Inter,sans-serif;font-weight:600;letter-spacing:.12em;line-height:1.05}
   #livePanel:fullscreen{background:var(--bg);overflow:auto;padding:2.5vw;border-radius:0}
-  #livePanel:fullscreen .q-big{font-size:clamp(2rem,4vw,4.4rem)}
+  #livePanel:fullscreen .q-big{font-size:clamp(1.6rem,3vw,3.2rem)}
   .cloud{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;justify-content:center;align-items:center;min-height:260px;padding:1rem}
   .cloud span{font-weight:700;line-height:1.1;transition:font-size .5s;overflow-wrap:anywhere}
   .tbl-wrap{background:var(--face);border:1px solid rgba(0,0,0,.04);box-shadow:var(--raise);border-radius:1.25rem}
@@ -133,7 +133,7 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 py-5 grid grid-cols-[1fr_auto] md:grid-cols-[1fr_auto_1fr] items-center gap-x-4 gap-y-3">
     <div class="min-w-0">
       <p class="text-[11px] font-bold tracking-tight">대학 수업 참여형 도구 · 실시간 응답</p>
-      <p class="flex items-baseline gap-2"><span class="font-disp text-2xl font-medium tracking-[0.3em] leading-tight select-none">LIVEPOLL</span><span id="verChip" class="chip !px-2 !py-0.5 font-disp !text-[10px]">v1.5.2</span></p>
+      <p class="flex items-baseline gap-2"><span class="font-disp text-2xl font-medium tracking-[0.3em] leading-tight select-none">LIVEPOLL</span><span id="verChip" class="chip !px-2 !py-0.5 font-disp !text-[10px]">v1.6.0</span></p>
       <p class="text-[10px] text-muted">Presented by Live Vote &amp; Quiz</p>
     </div>
     <h1 class="col-span-2 md:col-span-1 order-3 md:order-none flex items-center gap-3 md:justify-center min-w-0">
@@ -295,6 +295,18 @@
             <p class="text-[11px] text-muted mt-2 leading-5" id="relayHelp"></p>
           </div>
           <div>
+            <div class="sec-head !mb-3">👥 STUDENTS <small>—— 접속 학생</small><span class="total font-disp">JOINED <b id="rosterCount">0</b></span></div>
+            <div class="flex items-center justify-between gap-3">
+              <p class="text-xs font-bold">이름 목록 보기</p>
+              <button class="switch" role="switch" aria-checked="false" id="rosterSwitch" data-act="roster-toggle" aria-label="접속 학생 이름 목록 보기" type="button"></button>
+            </div>
+            <p class="text-[11px] text-muted mt-1">큰 화면에 이름이 보이지 않도록 기본은 꺼져 있습니다. ✓는 현재 질문에 투표한 학생입니다.</p>
+            <div id="rosterBox" hidden>
+              <ul id="rosterList" class="mt-3 flex flex-wrap gap-1.5"></ul>
+              <button class="pill pill-sm mt-3" data-act="roster-clear" type="button">목록 비우기</button>
+            </div>
+          </div>
+          <div>
             <div class="sec-head !mb-3">🎓 SESSION <small>—— 수업 회차</small></div>
             <input id="sessionInput" class="inset" maxlength="40" placeholder="예: 3주차" aria-label="수업 회차">
             <p class="text-[11px] text-muted mt-2">마감·정답 공개 시 이 회차 이름으로 결과가 자동 저장됩니다.</p>
@@ -319,6 +331,17 @@
         <p id="reportEmpty" class="text-sm text-muted text-center py-6" hidden>이 회차에는 정답이 지정된 결과가 없습니다.</p>
       </div>
       <ol id="reportLegend" class="mt-4 grid gap-1 text-sm text-muted"></ol>
+      <div class="mt-10">
+        <div class="sec-head">🧑‍🎓 STUDENTS <small>—— 학생별 결과</small><span class="total font-disp">TOTAL <b id="stuCount">0</b></span></div>
+        <div class="flex flex-wrap gap-2 mb-4"><button class="pill pill-primary pill-sm" data-act="dl-stu-csv" type="button">⬇ 학생별 CSV</button></div>
+        <div class="tbl-wrap overflow-x-auto">
+          <table class="tbl" style="min-width:460px">
+            <thead><tr><th>이름</th><th>응답 문항</th><th>정답 수</th><th>정답률</th></tr></thead>
+            <tbody id="stuTblBody"></tbody>
+          </table>
+          <p id="stuTblEmpty" class="text-sm text-muted text-center py-6" hidden>이 회차에 기록된 학생 응답이 없습니다.</p>
+        </div>
+      </div>
     </div>
 
     <div>
@@ -367,6 +390,9 @@
     <div class="sec-head">🙋 JOIN <small>—— 투표 참여하기</small></div>
     <p class="text-sm text-muted mb-5">화면에 보이는 방 코드를 입력하세요.</p>
     <input id="stuCode" class="inset text-center cd tracking-[.2em]" style="font-size:2rem;padding:1rem" maxlength="8" placeholder="ABCDE" autocomplete="off" autocapitalize="characters" inputmode="text" aria-label="방 코드">
+    <label class="block text-xs font-bold mt-5">이름
+      <input id="stuJoinName" class="inset mt-1.5" style="font-size:1.15rem" maxlength="20" placeholder="예: 홍길동" autocomplete="name">
+    </label>
     <div class="flex items-center justify-between gap-3 mt-5">
       <div><p class="font-bold text-sm">실시간 중계 사용</p><p class="text-[11px] text-muted">다른 기기(휴대폰)로 참여할 때 켜세요.</p></div>
       <button class="switch" role="switch" aria-checked="true" id="stuRelaySwitch" data-act="stu-relay-toggle" aria-label="중계 사용" type="button"></button>
@@ -377,6 +403,7 @@
   <div id="stuRoom" hidden>
     <div class="flex items-center justify-between gap-2 mb-5 flex-wrap">
       <span class="chip font-disp">ROOM <b class="text-ink" id="stuRoomCode"></b></span>
+      <button class="pill pill-sm" data-act="stu-name-edit" id="stuNameChip" type="button" title="이름 변경" hidden></button>
       <span class="chip" id="stuConn">연결 중…</span>
       <button class="pill pill-sm" data-act="stu-leave" type="button">방 나가기</button>
     </div>
@@ -408,11 +435,12 @@
    LIVEPOLL — 02 실시간 투표/퀴즈 (single-file)
    ========================================================= */
 // 버전: 새 기능 → 둘째 자리, 고침·디자인 → 셋째 자리
+// v1.6.0  학생 이름 입력(QR 접속 시), 접속 학생 목록, 기록에 이름 저장, 학생별 결과 표·CSV·HTML 리포트, 결과 화면 질문 글씨 축소
 // v1.5.2  고침: 삭제·초기화 등 확인창을 페이지 안 모달로 교체 (기본 confirm()이 막힌 환경에서 삭제가 안 되던 문제)
 // v1.5.1  디자인 통일: QUIZLAB(01) 스타일 — 앞면 돌출 표면, Inter+Noto Sans KR, 영문 섹션 헤더, 세그먼트 탭, 전체 폭 헤더·푸터, 날짜 표시
 // v1.5.0  결과 저장·QUIZ HISTORY·질문 세트·회차 리포트·문항 편집기
 // v1.4.0  소프트 UI 디자인 · v1.3.0 질문 유형·타이머·단축키 · v1.2.0 AI·MQTT 중계 · v1.0.0 기본 골격
-const VERSION = '1.5.2';
+const VERSION = '1.6.0';
 const TIMES = [0, 10, 20, 30, 60, 90, 120];
 const TYPE_LABEL = { single: '단일 선택', multi: '복수 선택', ox: 'OX', word: '워드클라우드' };
 const LETTERS = 'ABCDEF';
@@ -564,7 +592,7 @@ const RELAY_TEXT = { off: '꺼짐', connecting: '연결 중…', on: '연결됨 
 let hostActive = false;
 let S = loadHost();
 function loadHost() {
-  const base = { room: genRoom(), questions: sampleQuestions(), idx: 0, endsAt: 0, votes: {}, session: today(), relay: false };
+  const base = { room: genRoom(), questions: sampleQuestions(), idx: 0, endsAt: 0, votes: {}, session: today(), relay: false, roster: {} };
   const d = LS.get('lp_host', null);
   if (!d) return base;
   const s = Object.assign(base, d);
@@ -603,9 +631,17 @@ function broadcastState() { if (hostActive) Bus.send(stateMsg()); }
 
 Bus.on(m => {
   if (!hostActive || m.room !== S.room) return;
+  noteName(m);
   if (m.t === 'hello') broadcastState();
   if (m.t === 'vote') acceptVote(m);
 });
+// 학생 이름 기록 (voter ID → 이름)
+function noteName(m) {
+  if (!['hello', 'join', 'vote'].includes(m.t) || typeof m.voter !== 'string' || m.voter.length > 40 || typeof m.name !== 'string') return;
+  const n = m.name.trim().replace(/\s+/g, ' ').slice(0, 20); if (!n) return;
+  if (!S.roster) S.roster = {};
+  if (S.roster[m.voter] !== n) { S.roster[m.voter] = n; saveHost(); scheduleLive(); }
+}
 function acceptVote(m) {
   const q = curQ(); if (!q) return;
   const v = vbox(q);
@@ -676,7 +712,8 @@ function recordHistory() {
     text: q.text, type: q.type, options: [...q.options], correct: [...q.correct], answer: q.answer || '', time: q.time,
     counts: t.counts, words: t.words, total: t.total, correctCount: t.correctCount,
     rate: (t.correctCount == null || !t.total) ? null : t.correctCount / t.total,
-    ballots: { ...v.ballots }
+    ballots: { ...v.ballots },
+    names: Object.fromEntries(Object.keys(v.ballots).map(k => [k, (S.roster || {})[k] || '']))
   };
   const i = H.findIndex(h => h.key === key);
   if (i >= 0) { e.id = H[i].id; H.splice(i, 1); }
@@ -833,13 +870,25 @@ function tickCountdown() {
   if (r <= 5) el.classList.add('warn');
   if (Date.now() >= S.endsAt) { chime(); closeVote(true); }
 }
-let lastUrl = '';
+let lastUrl = '', showRoster = false;
+function renderRoster() {
+  const R = S.roster || {}; const ids = Object.keys(R);
+  $('#rosterCount').textContent = ids.length;
+  $('#rosterSwitch').setAttribute('aria-checked', String(showRoster));
+  $('#rosterBox').hidden = !showRoster;
+  if (!showRoster) return;
+  const q = curQ(); const voted = q ? vbox(q).ballots : {};
+  $('#rosterList').innerHTML = ids.length
+    ? ids.sort((a, b) => R[a].localeCompare(R[b], 'ko')).map(id => `<li class="chip ${voted[id] !== undefined ? 'chip-ok' : ''}">${voted[id] !== undefined ? '✓ ' : ''}${esc(R[id])}</li>`).join('')
+    : '<li class="text-[11px] text-muted">아직 접속한 학생이 없습니다.</li>';
+}
 function studentUrl() {
   const base = location.href.split('#')[0];
   return `${base}#/vote?room=${S.room}&relay=${S.relay ? 1 : 0}`;
 }
 function renderRoomPanel() {
   $('#roomCode').textContent = S.room;
+  renderRoster();
   const url = studentUrl();
   $('#joinUrl').textContent = url;
   if (url !== lastUrl && window.QRCode) {
@@ -1094,6 +1143,10 @@ function renderReport() {
   $('#reportEmpty').hidden = rated.length > 0;
   $('#reportChart').parentElement.hidden = !rated.length;
   $('#reportLegend').innerHTML = rows.map((r, i) => `<li style="overflow-wrap:anywhere"><b>Q${i + 1}</b> ${esc(r.text)} — ${r.total}명 · 정답률 ${pct(r.rate)}</li>`).join('');
+  const studs = studentStats(rows);
+  $('#stuCount').textContent = studs.length; $('#stuTblEmpty').hidden = studs.length > 0;
+  $('#stuTblBody').innerHTML = studs.map(t => `<tr><td class="font-bold" style="overflow-wrap:anywhere">${esc(t.name)}</td><td>${t.answered}문항</td><td>${t.rated ? t.correct + ' / ' + t.rated : '–'}</td>
+    <td class="font-bold" style="color:${t.rate == null ? 'var(--muted)' : t.rate >= .5 ? 'var(--ok)' : 'var(--bad)'}">${pct(t.rate)}</td></tr>`).join('');
   if (!rated.length) return;
   const labels = rows.map((_, i) => 'Q' + (i + 1));
   const data = rows.map(r => r.rate == null ? null : Math.round(r.rate * 100));
@@ -1112,6 +1165,33 @@ function renderReport() {
     reportChart.update();
   }
 }
+// 학생별 집계: 회차의 질문별 최신 결과에서 응답·정답 수 계산
+function studentStats(rows) {
+  const map = {};
+  rows.forEach((r, qi) => Object.entries(r.ballots || {}).forEach(([voter, a]) => {
+    const t = map[voter] || (map[voter] = { voter, name: '', answered: 0, rated: 0, correct: 0, answers: {} });
+    if (r.names && r.names[voter]) t.name = r.names[voter];
+    t.answered++;
+    const ok = r.rate != null ? isCorrect(r, a) : null;
+    if (ok != null) { t.rated++; if (ok) t.correct++; }
+    t.answers[qi] = { a, ok };
+  }));
+  return Object.values(map).map(t => ({ ...t, name: t.name || '(이름 없음)', rate: t.rated ? t.correct / t.rated : null }))
+    .sort((x, y) => (y.rate ?? -1) - (x.rate ?? -1) || x.name.localeCompare(y.name, 'ko'));
+}
+function fmtBallot(r, a) {
+  if (r.type === 'word') return String(a);
+  return (Array.isArray(a) ? a : [a]).map(i => r.type === 'ox' ? r.options[i] : LETTERS[i]).join(',');
+}
+function downloadStudentCSV() {
+  const s = $('#reportSession').value; if (!s) return toast('기록이 없습니다.');
+  const rows = reportRows(s); const studs = studentStats(rows); if (!studs.length) return toast('학생 응답이 없습니다.');
+  const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const lines = [['회차', '이름', '응답 문항 수', '정답 수', '정답 지정 문항 응답 수', '정답률(%)', ...rows.map((r, i) => `Q${i + 1}. ${r.text.slice(0, 30)}`)].map(q).join(',')];
+  studs.forEach(t => lines.push([s, t.name, t.answered, t.correct, t.rated, t.rate == null ? '' : Math.round(t.rate * 100),
+    ...rows.map((r, i) => { const x = t.answers[i]; return x ? fmtBallot(r, x.a) + (x.ok == null ? '' : x.ok ? ' (O)' : ' (X)') : '-'; })].map(q).join(',')));
+  download(`livepoll-students-${s.replace(/[\\/:*?"<>|\s]+/g, '_')}.csv`, '\ufeff' + lines.join('\r\n'), 'text/csv;charset=utf-8');
+}
 function voteSummary(h) {
   if (h.type === 'word') return Object.entries(h.words || {}).sort((a, b) => b[1] - a[1]).map(([w, c]) => `${w}:${c}`).join(' / ');
   return h.options.map((o, i) => `${h.type === 'ox' ? o : LETTERS[i] + '.' + o}:${h.counts[i] || 0}`).join(' / ');
@@ -1129,6 +1209,7 @@ function downloadHTML() {
   const rows = reportRows(s); const rated = rows.filter(r => r.rate != null);
   const avg = rated.length ? rated.reduce((a, r) => a + r.rate, 0) / rated.length : null;
   const worst = rated.length ? rated.reduce((a, r) => r.rate < a.rate ? r : a) : null;
+  const studs = studentStats(rows);
   const bars = rows.map((r, i) => `<tr><td class="n">Q${i + 1}</td><td>${esc(r.text)}<div class="sub">${esc(voteSummary(r))}</div></td><td class="n">${r.total}명</td><td class="bar"><div class="track"><div class="fill${r === worst ? ' worst' : ''}" style="width:${r.rate == null ? 0 : Math.round(r.rate * 100)}%"></div></div><span>${pct(r.rate)}</span></td></tr>`).join('');
   const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LIVEPOLL 리포트 · ${esc(s)}</title>
 <style>body{font-family:Inter,"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;background:#ececeb;color:#1d1d1f;margin:0;padding:32px 16px}main{max-width:960px;margin:auto;background:#f1f1f0;border-radius:2rem;padding:28px;border:1px solid rgba(0,0,0,.04);box-shadow:0 10px 18px -8px rgba(0,0,0,.2),0 3px 0 -1px rgba(0,0,0,.06),inset 0 1px 0 #fff}
@@ -1138,6 +1219,7 @@ table{width:100%;border-collapse:collapse}td,th{padding:10px 8px;border-bottom:1
 <body><main><p class="m" style="margin:0;font-size:12px">교수신문 AI 교육 웹앱 시리즈 · LIVEPOLL v${VERSION}</p><h1>수업 결과 리포트 — ${esc(s)}</h1><p class="m">생성: ${fmtTime(Date.now())}</p>
 <div class="stats"><div class="st"><small>문항 수</small><b>${rows.length}</b></div><div class="st"><small>평균 정답률</small><b>${pct(avg)}</b></div><div class="st"><small>총 응답 수</small><b>${rows.reduce((a, r) => a + r.total, 0)}</b></div><div class="st"><small>가장 많이 틀린 질문</small><b style="color:#d0544a">${worst ? pct(worst.rate) : '–'}</b><small>${worst ? esc(worst.text) : ''}</small></div></div>
 <table><thead><tr><th>번호</th><th>질문 · 보기별 득표</th><th>참여</th><th>정답률</th></tr></thead><tbody>${bars}</tbody></table>
+${studs.length ? `<h2 style="margin:32px 0 8px;font-size:18px">학생별 결과</h2><table><thead><tr><th>이름</th><th>응답 문항</th><th>정답 수</th><th>정답률</th></tr></thead><tbody>${studs.map(t => `<tr><td class="n">${esc(t.name)}</td><td>${t.answered}</td><td>${t.rated ? t.correct + ' / ' + t.rated : '–'}</td><td class="n">${pct(t.rate)}</td></tr>`).join('')}</tbody></table>` : ''}
 <footer>Copyright 2026 ⓒ Edu AI APP, All Rights Reserved. | 박정원 교수(한국외국어대학교 중국학대학)</footer></main></body></html>`;
   download(`livepoll-report-${s.replace(/[\\/:*?"<>|\s]+/g, '_')}.html`, html, 'text/html;charset=utf-8');
 }
@@ -1284,7 +1366,7 @@ async function aiRegen(id) {
    ========================================================= */
 let stuActive = false;
 const VOTER = (() => { let v = LS.get('lp_voter', ''); if (!v) { v = 'v_' + uid(); LS.set('lp_voter', v); } return v; })();
-const ST = { room: '', relay: true, state: null, endLocal: 0, sel: [], selKey: '', sig: '', helloT: null, ack: {} };
+const ST = { room: '', relay: true, state: null, endLocal: 0, sel: [], selKey: '', sig: '', helloT: null, ack: {}, name: LS.get('lp_name', ''), editName: false };
 function votedKey(m) { return `${m.room}|${m.q.id}|${m.round}`; }
 function getVoted() { return LS.get('lp_voted', {}); }
 
@@ -1300,7 +1382,7 @@ Bus.on(m => {
 Bus.onStatus(s => {
   if (stuActive) renderStuConn();
   if (hostActive) { renderRoomPanel(); if (s === 'connected') broadcastState(); }
-  if (s === 'connected' && stuActive) Bus.send({ t: 'hello', room: ST.room });
+  if (s === 'connected' && stuActive) Bus.send({ t: 'hello', room: ST.room, voter: VOTER, name: ST.name });
 });
 function renderStuConn() {
   const el = $('#stuConn');
@@ -1320,7 +1402,7 @@ function stuEnter(room, relay) {
   syncRelay();
   renderStudent(); renderStuConn();
   clearInterval(ST.helloT);
-  const hello = () => { if (!ST.state && stuActive) Bus.send({ t: 'hello', room }); };
+  const hello = () => { if (!ST.state && stuActive) Bus.send({ t: 'hello', room, voter: VOTER, name: ST.name }); };
   hello(); ST.helloT = setInterval(hello, 3000);
 }
 function stuLeave() { stuActive = false; clearInterval(ST.helloT); if (ST.room) Bus.unsub(Bus.topic(ST.room, 'host')); ST.room = ''; ST.state = null; syncRelay(); }
@@ -1328,6 +1410,11 @@ function renderStudent() {
   if (!stuActive || !ST.room) return;
   renderStuConn();
   const m = ST.state; const body = $('#stuBody');
+  const chip = $('#stuNameChip'); chip.hidden = !ST.name || ST.editName; chip.textContent = '👤 ' + ST.name;
+  if (!ST.name || ST.editName) {
+    if (ST.sig !== 'name') { ST.sig = 'name'; body.innerHTML = nameForm(); setTimeout(() => $('#stuName')?.focus(), 60); }
+    return;
+  }
   if (!m) { body.innerHTML = `<div class="text-center py-10"><p class="text-5xl mb-4">📡</p><p class="text-xl font-bold mb-2">교수 화면을 찾는 중…</p><p class="text-muted">방 코드가 맞는지 확인하세요.${ST.relay ? '' : '<br>다른 기기라면 “실시간 중계”를 켜고 다시 입장하세요.'}</p></div>`; ST.sig = 'none'; return; }
   if (!m.q) { body.innerHTML = `<p class="text-center text-xl font-bold py-10">아직 질문이 없습니다.</p>`; ST.sig = 'noq'; return; }
   const key = votedKey(m); const voted = getVoted()[key];
@@ -1373,6 +1460,21 @@ function renderStudent() {
   tickStudent();
   if (m.status === 'open' && voted === undefined) updateSubmit();
 }
+function nameForm() {
+  return `<div class="sec-head">🙋 NAME <small>—— 참여자 이름</small></div>
+    <p class="text-lg font-bold mb-1">${ST.editName ? '이름을 바꿉니다' : '이름을 입력하고 참여하세요'}</p>
+    <p class="text-sm text-muted mb-5">입력한 이름은 교수님의 결과 기록·리포트에 사용됩니다.</p>
+    <input id="stuName" class="inset" style="font-size:1.4rem;padding:1rem 1.2rem" maxlength="20" placeholder="예: 홍길동" value="${esc(ST.name)}" autocomplete="name" enterkeyhint="done" aria-label="이름">
+    <button type="button" class="pill pill-primary w-full mt-5" style="min-height:60px;font-size:1.15rem" data-act="stu-name-save">${ST.editName ? '저장' : '확인하고 참여하기'}</button>
+    ${ST.editName ? '<button type="button" class="pill w-full mt-3" data-act="stu-name-cancel">취소</button>' : ''}`;
+}
+function stuNameSave(v) {
+  const n = String(v || '').trim().replace(/\s+/g, ' ').slice(0, 20);
+  if (!n) { toast('이름을 입력하세요.'); return false; }
+  ST.name = n; ST.editName = false; ST.sig = ''; LS.set('lp_name', n);
+  if (ST.room) Bus.send({ t: 'join', room: ST.room, voter: VOTER, name: n });
+  renderStudent(); return true;
+}
 function updateSubmit() {
   const b = $('#stuSubmit'); if (!b) return; const q = ST.state.q;
   b.disabled = q.type === 'word' ? !($('#stuWord')?.value.trim()) : !ST.sel.length;
@@ -1399,7 +1501,7 @@ function stuSubmit() {
   const key = votedKey(m); const V = getVoted();
   if (V[key] !== undefined) return;
   V[key] = answer; LS.set('lp_voted', V);
-  Bus.send({ t: 'vote', room: m.room, qid: q.id, round: m.round, voter: VOTER, answer });
+  Bus.send({ t: 'vote', room: m.room, qid: q.id, round: m.round, voter: VOTER, name: ST.name, answer });
   renderStudent();
 }
 
@@ -1481,7 +1583,7 @@ document.addEventListener('click', e => {
     case 'relay': S.relay = !S.relay; saveHost(); syncRelay(); renderRoomPanel(); toast(S.relay ? '공개 MQTT 중계를 켰습니다. QR코드가 갱신되었습니다.' : '중계를 껐습니다. 같은 브라우저의 탭끼리만 전달됩니다.'); break;
     case 'copy-url': navigator.clipboard?.writeText(studentUrl()).then(() => toast('학생 접속 링크를 복사했습니다.'), () => toast(studentUrl(), 5000)); break;
     case 'open-student-tab': window.open(studentUrl(), '_blank'); break;
-    case 'new-room': ask('새 방 코드를 만들까요? 학생들은 새 QR로 다시 접속해야 합니다.', '새로 만들기').then(ok => { if (!ok) return; Bus.unsub(Bus.topic(S.room, 'client')); S.room = genRoom(); Bus.join(S.room); Bus.sub(Bus.topic(S.room, 'client')); saveHost(); broadcastState(); renderRoomPanel(); }); break;
+    case 'new-room': ask('새 방 코드를 만들까요? 학생들은 새 QR로 다시 접속해야 합니다.', '새로 만들기').then(ok => { if (!ok) return; Bus.unsub(Bus.topic(S.room, 'client')); S.room = genRoom(); S.roster = {}; Bus.join(S.room); Bus.sub(Bus.topic(S.room, 'client')); saveHost(); broadcastState(); renderRoomPanel(); }); break;
     // history
     case 'h-reopen': reopenHistory(id); break;
     case 'h-del': ask('이 기록을 삭제할까요?', '삭제', true).then(ok => { if (ok) { LS.set('lp_history', getHist().filter(h => h.id !== id)); renderHistory(); } }); break;
@@ -1496,9 +1598,16 @@ document.addEventListener('click', e => {
     case 'key-save': AI.saveKeys = !AI.saveKeys; saveAI(); renderAI(); toast(AI.saveKeys ? '키 저장을 켰습니다.' : '키 저장을 껐습니다. 저장돼 있던 키를 브라우저에서 지웠습니다.'); break;
     case 'key-delete': ask('이 브라우저에 저장된 API 키를 모두 삭제할까요?', '키 삭제', true).then(ok => { if (!ok) return; LS.del('lp_keys'); KEYS = { claude: '', openai: '', gemini: '' }; Object.keys(AI_MSG).forEach(k => delete AI_MSG[k]); renderAI(); toast('저장된 키를 삭제했습니다.'); }); break;
     // student
-    case 'stu-join': { const c = $('#stuCode').value.toUpperCase().replace(/[^A-Z0-9]/g, ''); if (c.length < 4) return toast('방 코드를 확인하세요.'); location.hash = `#/vote?room=${c}&relay=${$('#stuRelaySwitch').getAttribute('aria-checked') === 'true' ? 1 : 0}`; break; }
+    case 'stu-join': { const c = $('#stuCode').value.toUpperCase().replace(/[^A-Z0-9]/g, ''); if (c.length < 4) return toast('방 코드를 확인하세요.');
+      const jn = $('#stuJoinName').value.trim(); if (!jn) return toast('이름을 입력하세요.'); ST.name = jn.replace(/\s+/g, ' ').slice(0, 20); LS.set('lp_name', ST.name); location.hash = `#/vote?room=${c}&relay=${$('#stuRelaySwitch').getAttribute('aria-checked') === 'true' ? 1 : 0}`; break; }
     case 'stu-relay-toggle': t.setAttribute('aria-checked', String(t.getAttribute('aria-checked') !== 'true')); break;
     case 'stu-leave': location.hash = '#/vote'; break;
+    case 'stu-name-save': stuNameSave($('#stuName')?.value); break;
+    case 'stu-name-edit': ST.editName = true; ST.sig = ''; renderStudent(); break;
+    case 'stu-name-cancel': ST.editName = false; ST.sig = ''; renderStudent(); break;
+    case 'roster-toggle': showRoster = !showRoster; renderRoster(); break;
+    case 'roster-clear': ask('접속 학생 이름 목록을 비울까요? (저장된 기록의 이름은 유지됩니다)', '비우기').then(ok => { if (ok) { S.roster = {}; saveHost(); renderRoster(); } }); break;
+    case 'dl-stu-csv': downloadStudentCSV(); break;
     case 'stu-pick': stuPick(+t.dataset.i); break;
     case 'stu-submit': stuSubmit(); break;
   }
@@ -1523,6 +1632,8 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.id === 'stuWord') { e.preventDefault(); stuSubmit(); return; }
+  if (e.key === 'Enter' && e.target.id === 'stuName') { e.preventDefault(); stuNameSave(e.target.value); return; }
+  if (e.key === 'Enter' && e.target.id === 'stuJoinName') { e.preventDefault(); $('[data-act="stu-join"]').click(); return; }
   if (e.key === 'Enter' && e.target.id === 'stuCode') { e.preventDefault(); $('[data-act="stu-join"]').click(); return; }
   if (e.key === 'Enter' && e.target.id === 'setName') { e.preventDefault(); saveSet(); return; }
   if (e.key === 'Enter' && e.target.id === 'aiTopic') { e.preventDefault(); aiGenerate(); return; }
